@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { tryLoadAudio } from "./AssetLoader";
+import { tryLoadAudio, tryLoadImage } from "./AssetLoader";
 
 function fakeCtx(decodeOk = true) {
   return {
@@ -47,5 +47,37 @@ describe("tryLoadAudio (override local com fallback)", () => {
   it("decode que falha (codec não suportado) também cai para a próxima", async () => {
     const buf = await tryLoadAudio(fakeCtx(false), ["/x"], fakeFetch({ "/x": { ok: true } }));
     expect(buf).toBeNull();
+  });
+});
+
+type FakeImg = {
+  src: string;
+  onload: (() => void) | null;
+  onerror: (() => void) | null;
+};
+
+function fakeImageFactory(okUrls: string[]) {
+  return () => {
+    const img: FakeImg = {
+      onload: null,
+      onerror: null,
+      set src(url: string) {
+        queueMicrotask(() => (okUrls.includes(url) ? img.onload?.() : img.onerror?.()));
+      },
+    } as unknown as FakeImg;
+    return img as unknown as HTMLImageElement;
+  };
+}
+
+describe("tryLoadImage (sprites com override local)", () => {
+  it("primeira URL que carrega vence", async () => {
+    const img = await tryLoadImage(["/local/a.png", "/assets/a.svg"], fakeImageFactory(["/local/a.png"]));
+    expect(img).not.toBeNull();
+  });
+  it("erro cai para a próxima; nenhuma => null sem lançar", async () => {
+    const img = await tryLoadImage(["/x.png", "/y.svg"], fakeImageFactory(["/y.svg"]));
+    expect(img).not.toBeNull();
+    const none = await tryLoadImage(["/x.png"], fakeImageFactory([]));
+    expect(none).toBeNull();
   });
 });

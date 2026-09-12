@@ -14,6 +14,16 @@ Cada entrada: data, tipo (`decisão` | `pesquisa` | `progresso` | `grading`), re
 
 ---
 
+## 2026-09-11 — progresso — Sprites originais "Palmitos" + override local de imagens (121 testes)
+
+O pack baixado também não tem sprites de gameplay (busca clap/pachi/trio vazia —
+só logos animados e artes avulsas). Entregue no lugar: sprites SVG ORIGINAIS de
+design próprio ("Palmitos": criatura-gota com antena, 3 cores × poses idle/clap
++ sad do jogador) em public/assets/sprites/, commitáveis. TrioScene ganhou
+setSprites/poseFor (pose = f(visualBeat), testada) com drawImage + bounce no
+clap e fallback vetorial. tryLoadImage no AssetLoader (testado): override em
+public/local/trioN_pose.{png,svg} tem prioridade sobre os sprites do repo.
+
 ## 2026-09-11 — decisão — RhythmHeavenResourcesPack inspecionado: sem áudio; repo protegido
 
 O pack baixado pelo usuário (4.3 GB dentro do diretório do repo!) contém apenas

@@ -18,10 +18,10 @@ import { InputManager } from "./core/InputManager";
 import { Judge, cuesFromEvents } from "./core/Judge";
 import { applyAutosound } from "./core/autosound";
 import { LuaHost } from "./lua/LuaHost";
-import { tryLoadAudio } from "./core/AssetLoader";
+import { tryLoadAudio, tryLoadImage } from "./core/AssetLoader";
 import { Renderer } from "./render/Renderer";
 import { ClappyScene } from "./render/minigames/clappy";
-import { TrioScene } from "./render/minigames/trio";
+import { TrioScene, type TrioSprites } from "./render/minigames/trio";
 import { DiagnosticsHud } from "./debug/diagnostics";
 import type { ChartData, InputSample } from "./core/types";
 
@@ -49,6 +49,7 @@ function fatalError(ui: HTMLElement, msg: string): void {
 }
 
 interface Session {
+  sprites: TrioSprites;
   ctx: AudioContext;
   ui: HTMLElement;
   renderer: Renderer;
@@ -76,6 +77,7 @@ function playSong(s: Session, audioOffsetS: number, visualOffsetS: number): Prom
     judge.load(cues);
 
     const scene = s.chart.minigame === "trio" ? new TrioScene() : new ClappyScene();
+    if (scene instanceof TrioScene) scene.setSprites(s.sprites);
     sched.onVisualEvent((ev) => scene.onChartEvent(ev));
 
     s.host.setRuntimeHandlers({
@@ -195,6 +197,25 @@ async function main() {
   sfx.register("miss", (await local("miss.wav")) ?? makeTone(ctx, 160, 0.15));
   // música: override local > caminho do chart (webm -> m4a, cadeia A11)
   const chartAudio = "/" + loaded.chart.song.audio;
+  // sprites: override local (png/svg do usuário) > sprites originais do repo
+  const sprites: TrioSprites = {};
+  const poses: Array<[0 | 1 | 2, string]> = [
+    [0, "idle"], [0, "clap"],
+    [1, "idle"], [1, "clap"],
+    [2, "idle"], [2, "clap"], [2, "sad"],
+  ];
+  await Promise.all(
+    poses.map(async ([m, pose]) => {
+      const n = m + 1;
+      const img = await tryLoadImage([
+        `/local/trio${n}_${pose}.png`,
+        `/local/trio${n}_${pose}.svg`,
+        `/assets/sprites/trio${n}_${pose}.svg`,
+      ]);
+      if (img) (sprites[m] ??= {})[pose as "idle" | "clap" | "sad"] = img;
+    }),
+  );
+
   const music = await tryLoadAudio(ctx, [
     "/local/music.webm",
     "/local/music.m4a",
@@ -208,7 +229,7 @@ async function main() {
   const input = new InputManager(bootClock, { unreliableTimestamps });
   input.attach(window); // o clock real de cada tela entra via setClock()
 
-  const session: Session = { ctx, ui, renderer, host, chart: loaded.chart, sfx, input, music };
+  const session: Session = { sprites, ctx, ui, renderer, host, chart: loaded.chart, sfx, input, music };
 
   const settings = Settings.load();
   for (;;) {

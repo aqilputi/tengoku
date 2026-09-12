@@ -20,3 +20,23 @@ export async function tryLoadAudio(
   }
   return null;
 }
+
+/**
+ * Carga de imagem com fontes em ordem (override local > asset do repo).
+ * Nunca lança: null => o chamador usa o desenho vetorial de fallback.
+ */
+export function tryLoadImage(
+  urls: string[],
+  createImg: () => HTMLImageElement = () => new Image(),
+): Promise<HTMLImageElement | null> {
+  return new Promise((resolve) => {
+    const tryAt = (i: number) => {
+      if (i >= urls.length) return resolve(null);
+      const img = createImg();
+      img.onload = () => resolve(img);
+      img.onerror = () => tryAt(i + 1);
+      img.src = urls[i]!;
+    };
+    tryAt(0);
+  });
+}

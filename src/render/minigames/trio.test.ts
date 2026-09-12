@@ -33,6 +33,21 @@ describe("TrioScene — mecânica do trio: dois batem, o jogador fecha", () => {
   });
 });
 
+describe("TrioScene — seleção de pose para sprites", () => {
+  it("pose = clap durante o impulso, idle depois; jogador triste durante o glare", () => {
+    const s = new TrioScene();
+    s.onChartEvent({ kind: "cue", beat: 4, sfx: "clap1" });
+    expect(s.poseFor(0, 4.1)).toBe("clap");
+    expect(s.poseFor(0, 5.0)).toBe("idle");
+    expect(s.poseFor(2, 4.1)).toBe("idle");
+    const cue: Cue = { id: 0, beat: 8, time: 0, state: "missed" };
+    s.onJudgement({ verdict: "miss", cue, inputTime: null, errorMs: null, early: false });
+    expect(s.poseFor(2, 8.5)).toBe("sad"); // só o jogador fica triste
+    expect(s.poseFor(0, 8.5)).toBe("idle");
+    expect(s.poseFor(2, 10.5)).toBe("idle");
+  });
+});
+
 describe("charts/trio.lua — estrutura fiel à mecânica", () => {
   let chart: ChartData;
   beforeAll(async () => {

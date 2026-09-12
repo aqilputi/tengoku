@@ -4,6 +4,10 @@ import { impulse } from "./clappy";
 const CLAP_DUR = 0.5; // beats
 const GLARE_DUR = 2; // beats — a fila encara o jogador depois de um erro
 
+export type TrioPose = "idle" | "clap" | "sad";
+/** Sprites opcionais por membro/pose; ausente => desenho vetorial. */
+export type TrioSprites = Partial<Record<0 | 1 | 2, Partial<Record<TrioPose, HTMLImageElement>>>>;
+
 /**
  * Minigame "trio": três personagens ORIGINAIS em fila (formas abstratas
  * próprias). Os índices 0 e 1 batem nos cues (sfx clap1/clap2); o índice 2
@@ -13,6 +17,11 @@ export class TrioScene {
   private clapBeats = new Float64Array([-Infinity, -Infinity, -Infinity]);
   private glareBeat = -Infinity;
   lastVerdict: Verdict | null = null;
+  private sprites: TrioSprites = {};
+
+  setSprites(sprites: TrioSprites): void {
+    this.sprites = sprites;
+  }
 
   onChartEvent(ev: ChartEvent): void {
     if (ev.kind !== "cue") return;
@@ -47,6 +56,13 @@ export class TrioScene {
   isGlaring(visualBeat: Beats): boolean {
     const d = visualBeat - this.glareBeat;
     return d >= 0 && d < GLARE_DUR;
+  }
+
+  /** Pose para sprite: clap durante o impulso; sad (só jogador) durante o glare. */
+  poseFor(member: 0 | 1 | 2, visualBeat: Beats): TrioPose {
+    if (this.clapAmount(member, visualBeat) > 0) return "clap";
+    if (member === 2 && this.isGlaring(visualBeat)) return "sad";
+    return "idle";
   }
 
   // ---- desenho: personagens originais (cápsulas com listras), sem referência visual a terceiros ----
@@ -101,7 +117,18 @@ export class TrioScene {
     const xs = [w * 0.3, w * 0.5, w * 0.7];
     const hues = [18, 205, 130];
     for (let i = 0; i < 3; i++) {
-      this.drawMember(g, xs[i]!, h * 0.5, this.clapAmount(i as 0 | 1 | 2, visualBeat), glare, i === 2, hues[i]!);
+      const m = i as 0 | 1 | 2;
+      const clap = this.clapAmount(m, visualBeat);
+      const sprite = this.sprites[m]?.[this.poseFor(m, visualBeat)];
+      if (sprite) {
+        // bounce leve no clap; âncora no chão do personagem
+        const sc = 1 + 0.08 * clap;
+        const sw = 150 * sc;
+        const sh = 200 * sc;
+        g.drawImage(sprite, xs[i]! - sw / 2, h * 0.5 + 60 - sh, sw, sh);
+      } else {
+        this.drawMember(g, xs[i]!, h * 0.5, clap, glare, i === 2, hues[i]!);
+      }
     }
 
     if (this.lastVerdict) {
