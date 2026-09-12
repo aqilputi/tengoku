@@ -193,7 +193,15 @@ async function main() {
   sfx.register("clap_clean", playerClap ?? makeTone(ctx, 0, 0.06, "noise"));
   sfx.register("clap_weak", playerClap ?? makeTone(ctx, 0, 0.03, "noise"));
   sfx.register("miss", (await local("miss.wav")) ?? makeTone(ctx, 160, 0.15));
-  const music = await tryLoadAudio(ctx, ["/local/music.webm", "/local/music.m4a", "/local/music.ogg"]);
+  // música: override local > caminho do chart (webm -> m4a, cadeia A11)
+  const chartAudio = "/" + loaded.chart.song.audio;
+  const music = await tryLoadAudio(ctx, [
+    "/local/music.webm",
+    "/local/music.m4a",
+    "/local/music.ogg",
+    chartAudio,
+    chartAudio.replace(/\.webm$/, ".m4a"),
+  ]);
   sfx.warmup(); // A8
 
   const bootClock = new AudioClock(ctx, new TempoMap(0, [{ startBeat: 0, bpm: 120 }]));

@@ -14,6 +14,20 @@ Cada entrada: data, tipo (`decisão` | `pesquisa` | `progresso` | `grading`), re
 
 ---
 
+## 2026-09-11 — decisão/progresso — Música demo original; repos de assets de terceiros avaliados e recusados
+
+Avaliados HeavenStudioPlus (MIT no código, mas CREDITS.md declara "Original sounds
+by Nintendo"; song.wav de 6MB sem proveniência) e Tailx501/RhythmHeavenResourcesPack
+(GPL-3.0 no repo, mas CREDITS.md credita "Ripping Reapers" — música ripada dos
+jogos). Conclusão: as licenças dos repositórios não alcançam o áudio da Nintendo;
+nada foi baixado. Uso local por conta do usuário continua possível via public/local/.
+
+Solução entregue: faixa demo ORIGINAL gerada por script (48.8s @ 118 BPM, beat 0 em
+t=0, kick/hat/bass/pad, progressão Am–F–C–G), codificada em WebM/Opus + AAC (cadeia
+A11) e commitada em public/assets/audio/trio.{webm,m4a}. main.ts resolve a música:
+override local > caminho do chart (webm → m4a). Com isso o pipeline real de
+decodificação e o alinhamento música↔cues ficam testáveis de ponta a ponta.
+
 ## 2026-09-11 — progresso — Minigame "trio" (mecânica do The Clappy Trio) + docs em OKF (118 testes)
 
 Pesquisada a mecânica do The Clappy Trio (Rhythm Tengoku) em wikis de fãs: fila de
