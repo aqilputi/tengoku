@@ -1,10 +1,11 @@
 # Toolchain do projeto via pixi (https://pixi.sh) — conda-forge pinado por lockfile.
 # O lado JS continua npm (wasmoon/vite/vitest vêm do package.json); o pixi
 # fornece node + ferramentas Lua e é o task runner único do repo.
+# Sem win-64: luarocks e lua-language-server não têm build Windows no conda-forge.
 [workspace]
 name = "tengoku"
 channels = ["conda-forge"]
-platforms = ["linux-64", "osx-arm64", "osx-64", "win-64"]
+platforms = ["linux-64", "osx-arm64", "osx-64"]
 
 [dependencies]
 nodejs = "22.*"
@@ -19,8 +20,12 @@ install = "npm install"
 dev = { cmd = "npm run dev", depends-on = ["install"] }
 build = { cmd = "npm run build", depends-on = ["install"] }
 test = { cmd = "npm run test", depends-on = ["install"] }
-# Lua (charts)
-setup-lua = "luarocks --lua-version 5.4 install luacheck"
+# Lua (charts) — luacheck não existe no conda-forge; vem via luarocks.
+# O manifest global do luarocks.org estoura o loader do Lua 5.4 ("more than
+# 65536 constants"), então usamos manifests por usuário, que são pequenos.
+setup-lua = """
+luarocks --lua-version 5.4 --tree $PIXI_PROJECT_ROOT/.pixi/envs/default install --only-server https://luarocks.org/manifests/argparse argparse && luarocks --lua-version 5.4 --tree $PIXI_PROJECT_ROOT/.pixi/envs/default install --only-server https://luarocks.org/manifests/hisham luafilesystem && luarocks --lua-version 5.4 --tree $PIXI_PROJECT_ROOT/.pixi/envs/default install --only-server https://luarocks.org/manifests/lunarmodules luacheck 1.2.0
+"""
 lint-chart = "luacheck charts/"
 fmt-chart = "stylua charts/ lua-types/"
 fmt-chart-check = "stylua --check charts/ lua-types/"

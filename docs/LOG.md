@@ -5,6 +5,16 @@ Cada entrada: data, tipo (`decisão` | `pesquisa` | `progresso` | `grading`), re
 
 ---
 
+## 2026-09-11 — progresso — pixi instalado e ambiente resolvido
+
+`pixi install` verde: node 22.23.2, lua 5.4.8, stylua 2.5.2, lua-language-server 3.19,
+luacheck 1.2.0. `pixi.lock` commitado. Ajustes no caminho: win-64 removido das
+plataformas (luarocks/lua-language-server sem build Windows no conda-forge); o manifest
+global do luarocks.org estoura o loader do Lua 5.4 ("more than 65536 constants",
+luarocks 3.13) → task `setup-lua` usa manifests por usuário (argparse/hisham/
+lunarmodules) com `--tree` no env do pixi. Sanity check: luacheck aceita a DSL e
+flaga `os`/`io`/`print` (globals removidos pelo sandbox) em chart malicioso.
+
 ## 2026-09-11 — decisão — pixi como toolchain manager; tooling Lua para charts
 
 Adotado [pixi](https://pixi.sh) (prefix.dev, conda-forge) como camada de toolchain e
