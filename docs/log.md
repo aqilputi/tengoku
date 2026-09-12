@@ -14,6 +14,16 @@ Cada entrada: data, tipo (`decisão` | `pesquisa` | `progresso` | `grading`), re
 
 ---
 
+## 2026-09-11 — decisão — RhythmHeavenResourcesPack inspecionado: sem áudio; repo protegido
+
+O pack baixado pelo usuário (4.3 GB dentro do diretório do repo!) contém apenas
+material visual — logos, box arts, fontes (607 svg / 598 png / 576 ai); a pasta
+"Complete Music Collection" é só arte de capa. Zero arquivos de áudio. Nada
+utilizável para o jogo (e identidade visual da Nintendo não seria integrada de
+qualquer forma). Ação: RhythmHeavenResourcesPack/ no .gitignore ANTES de qualquer
+snapshot do jj — evitou 4.3 GB de material de terceiros no histórico público.
+Recomendado mover a pasta para fora do repo. Música demo original permanece.
+
 ## 2026-09-11 — decisão/progresso — Música demo original; repos de assets de terceiros avaliados e recusados
 
 Avaliados HeavenStudioPlus (MIT no código, mas CREDITS.md declara "Original sounds
