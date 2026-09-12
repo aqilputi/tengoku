@@ -5,6 +5,20 @@ Cada entrada: data, tipo (`decisão` | `pesquisa` | `progresso` | `grading`), re
 
 ---
 
+## 2026-09-11 — decisão — pixi como toolchain manager; tooling Lua para charts
+
+Adotado [pixi](https://pixi.sh) (prefix.dev, conda-forge) como camada de toolchain e
+task runner: pina node 22 + lua 5.4 + stylua + lua-language-server num lockfile único.
+O lado JS continua npm (`package.json` é a fonte de wasmoon/vite/vitest) — pixi não
+substitui o npm, embrulha ele (`pixi run dev|build|test`).
+
+Sobre "gerenciar projeto Lua": aqui Lua é conteúdo (charts no wasmoon, browser), não
+aplicação — sem rockspec no build. Gestão = `.luacheckrc` (globals da DSL declarados,
+globals proibidos pelo sandbox marcados como erro), `stylua.toml`, `.luarc.json` +
+`lua-types/chart-api.lua` (stubs `---@meta` → autocomplete da DSL no editor). A
+validação real dos charts segue sendo os testes vitest do LuaHost (PLANO M4).
+Se um dia charts virarem pacotes distribuíveis: luarocks + rockspec + busted.
+
 ## 2026-09-11 — pesquisa/decisão — Resultados da pesquisa externa: 12 ajustes adotados
 
 As três frentes concluíram (relatórios consolidados em [PESQUISA.md](PESQUISA.md)).

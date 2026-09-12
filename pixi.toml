@@ -1,0 +1,26 @@
+# Toolchain do projeto via pixi (https://pixi.sh) — conda-forge pinado por lockfile.
+# O lado JS continua npm (wasmoon/vite/vitest vêm do package.json); o pixi
+# fornece node + ferramentas Lua e é o task runner único do repo.
+[workspace]
+name = "tengoku"
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-arm64", "osx-64", "win-64"]
+
+[dependencies]
+nodejs = "22.*"
+lua = "5.4.*"                # REPL local p/ experimentar sintaxe de chart
+luarocks = ">=3.11"          # só p/ instalar luacheck (task setup-lua)
+lua-language-server = "*"    # LSP: autocomplete da DSL via lua-types/chart-api.lua
+stylua = "*"                 # formatador dos charts
+
+[tasks]
+# JS
+install = "npm install"
+dev = { cmd = "npm run dev", depends-on = ["install"] }
+build = { cmd = "npm run build", depends-on = ["install"] }
+test = { cmd = "npm run test", depends-on = ["install"] }
+# Lua (charts)
+setup-lua = "luarocks --lua-version 5.4 install luacheck"
+lint-chart = "luacheck charts/"
+fmt-chart = "stylua charts/ lua-types/"
+fmt-chart-check = "stylua --check charts/ lua-types/"
