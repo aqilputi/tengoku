@@ -5,6 +5,21 @@ Cada entrada: data, tipo (`decisão` | `pesquisa` | `progresso` | `grading`), re
 
 ---
 
+## 2026-09-11 — progresso — M7: artefatos de deploy prontos
+
+`public/_headers` (Cloudflare Pages, copiado pro dist no build — verificado),
+`deploy/nginx.conf.example` (MIME wasm, immutable/no-cache, gzip sem áudio) e
+`docs/DEPLOY.md` com os comandos curl de verificação de headers e a matriz de
+teste manual (Chrome/Firefox/Safari/Android/iOS; aceite = iPhone + Bluetooth).
+Bundle final: wasm 271KB (111KB gz) + js 140KB (47KB gz).
+
+Estado do ciclo: M0–M6 implementados com 107 testes verdes; M7 automatizável
+pronto. Restam os aceites MANUAIS: ouvir metrônomo 3min (M1), allocation
+profiling (M2/M5), feel de julgamento (M3), teste de corredor (M6), matriz de
+dispositivos (M7). CI aguarda destravamento de billing da conta GitHub.
+Sem assets ainda: sons sintetizados e personagens em canvas (arte/música
+originais pendentes — SPEC §6).
+
 ## 2026-09-11 — progresso — M6 implementado (107 testes verdes)
 
 Fluxo completo: boot → menu → calibração obrigatória no 1º uso → jogo → tela de

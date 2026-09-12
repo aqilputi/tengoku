@@ -1,0 +1,33 @@
+# Exemplo de server block para o build estático (SPEC §7).
+# Requisitos: MIME de .wasm (nginx antigo não tem), immutable nos assets com
+# hash, no-cache no index, gzip/brotli para js/wasm (áudio NÃO recomprimir).
+
+server {
+    listen 80;
+    server_name tengoku.example.com;
+    root /var/www/tengoku/dist;
+    index index.html;
+
+    # nginx < 1.21 não tem application/wasm no mime.types
+    types {
+        application/wasm wasm;
+    }
+
+    gzip on;
+    gzip_types application/javascript application/wasm text/css;
+    # áudio (ogg/opus/m4a) já é comprimido — fora do gzip_types de propósito
+
+    location /assets/ {
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        try_files $uri =404;
+    }
+
+    location = /index.html {
+        add_header Cache-Control "no-cache";
+    }
+
+    location / {
+        try_files $uri /index.html;
+        add_header Cache-Control "no-cache";
+    }
+}
