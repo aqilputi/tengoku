@@ -1,5 +1,7 @@
 import type { AudioClock } from "../core/AudioClock";
 import type { Scheduler } from "../core/Scheduler";
+import type { Judge } from "../core/Judge";
+import type { JudgementResult } from "../core/types";
 import type { Renderer } from "../render/Renderer";
 
 /**
@@ -13,12 +15,25 @@ export class DiagnosticsHud {
   private lastTextAt = 0;
   private clock: AudioClock;
   private sched: Scheduler | null;
+  private judge: Judge | null;
   private renderer: Renderer;
+  private lastJudgement = "";
 
-  constructor(clock: AudioClock, renderer: Renderer, sched: Scheduler | null = null) {
+  constructor(clock: AudioClock, renderer: Renderer, sched: Scheduler | null = null, judge: Judge | null = null) {
     this.clock = clock;
     this.sched = sched;
+    this.judge = judge;
     this.renderer = renderer;
+    if (judge) {
+      judge.onJudgement((r: JudgementResult) => {
+        this.lastJudgement =
+          r.errorMs !== null
+            ? `${r.verdict} ${r.errorMs >= 0 ? "+" : ""}${r.errorMs.toFixed(1)}ms${r.early ? " (early)" : ""}`
+            : r.cue
+              ? "MISS (omissão)"
+              : "MISS (extra!)";
+      });
+    }
     window.addEventListener("keydown", (e) => {
       if (e.code === "F1") { e.preventDefault(); this.visible = !this.visible; }
     });
@@ -37,6 +52,11 @@ export class DiagnosticsHud {
       this.lines.push(`fps       ${this.renderer.fps}`);
       if (this.sched) {
         this.lines.push(`sched     ok:${this.sched.stats.scheduled} drop:${this.sched.stats.dropped} late:${this.sched.stats.lateTicks}`);
+      }
+      if (this.judge) {
+        const st = this.judge.stats;
+        this.lines.push(`judge     hit:${st.hits} miss:${st.misses} μ:${st.meanErrorMs.toFixed(1)}ms med:${st.medianErrorMs.toFixed(1)}ms`);
+        this.lines.push(`último    ${this.lastJudgement}`);
       }
     }
     g.font = "13px monospace";

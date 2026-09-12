@@ -5,6 +5,25 @@ Cada entrada: data, tipo (`decisão` | `pesquisa` | `progresso` | `grading`), re
 
 ---
 
+## 2026-09-11 — progresso — M3 implementado via TDD (57 testes verdes)
+
+Judge + InputManager, red→green. Matriz de pareamento completa como teste: input
+exato ⇒ perfect 0ms; bordas ±45/±46/±90/±91 inclusive; input sem cue ⇒ miss
+explícito (regra RH, A9); 2 inputs → 1 cue ⇒ hit + extra-miss; anti-roubo (nearest
+pendente NA janela — cue mais próximo ganha, input cedo não rouba o seguinte); cue
+acertado não pareia de novo; miss por omissão emitido no instante da expiração;
+cue expirado não pareia com input atrasado; stats média/mediana; reset.
+
+InputManager: sanity A4 por evento (epoch/negativo/futuro ⇒ relógio atual), flag
+do boot, e.repeat ignorado, dedupe 30ms por tecla (bounce), fila circular 64 com
+descarte do mais antigo, drain com mutação in-place (zero alocação), clear() no
+resume. Demo main.ts atualizado: expect em cada beat, feedback audível imediato
+via playNow (fora do lookahead, A2), anel visual de veredito, HUD com erro por
+batida. Correção de narrowing do tsc no loop de expiração. Bundle 5.8 KB gzip.
+
+Aceite manual M3 pendente: jogar 32 beats e conferir mediana humana (~±20–40ms)
+no HUD; bater fora de propósito e ver "MISS (extra!)".
+
 ## 2026-09-11 — progresso — M0+M1+M2 implementados via TDD (36 testes verdes)
 
 Red→green por módulo. Gate de qualidade: `pixi run gate` = tsc strict + vitest + build,
