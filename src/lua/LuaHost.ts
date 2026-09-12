@@ -1,5 +1,5 @@
 import { LuaFactory, type LuaEngine } from "wasmoon";
-import type { Beats, ChartData, ChartEvent, SongMeta, Verdict } from "../core/types";
+import type { AssetManifest, Beats, ChartData, ChartEvent, SongMeta, Verdict } from "../core/types";
 import type { RuntimeHandlers } from "./api";
 
 export interface ChartLoadResult {
@@ -52,6 +52,7 @@ export class LuaHost {
   private songCalls = 0;
   private minigameName = "";
   private windowOpts: Record<string, number> = {};
+  private manifest: AssetManifest = { sfx: {}, sprites: {} };
   private loadError: string | null = null;
 
   private onHitFn: ((judgement: string, beat: Beats) => void) | null = null;
@@ -161,6 +162,40 @@ export class LuaHost {
       });
     });
 
+    lua.global.set("assets", (t: { sfx?: unknown; sprites?: unknown }) => {
+      const checkPath = (p: unknown, ctx: string): string => {
+        const path = String(p);
+        if (!path.startsWith("assets/")) this.contentError(`${ctx}: caminho deve estar em assets/ ("${path}")`);
+        return path;
+      };
+      const sfx: AssetManifest["sfx"] = {};
+      if (t && typeof t.sfx === "object" && t.sfx !== null) {
+        for (const [name, v] of Object.entries(t.sfx as Record<string, unknown>)) {
+          if (typeof v === "string") sfx[name] = checkPath(v, `assets.sfx.${name}`);
+          else if (v && typeof v === "object") {
+            const variants: Record<string, string> = {};
+            for (const [variant, p] of Object.entries(v as Record<string, unknown>)) {
+              variants[variant] = checkPath(p, `assets.sfx.${name}.${variant}`);
+            }
+            sfx[name] = variants;
+          }
+        }
+      }
+      const sprites: AssetManifest["sprites"] = {};
+      if (t && typeof t.sprites === "object" && t.sprites !== null) {
+        for (const [name, poses] of Object.entries(t.sprites as Record<string, unknown>)) {
+          if (poses && typeof poses === "object") {
+            const out: Record<string, string> = {};
+            for (const [pose, p] of Object.entries(poses as Record<string, unknown>)) {
+              out[pose] = checkPath(p, `assets.sprites.${name}.${pose}`);
+            }
+            sprites[name] = out;
+          }
+        }
+      }
+      this.manifest = { sfx, sprites };
+    });
+
     lua.global.set("on_hit", (fn: (judgement: string, beat: Beats) => void) => {
       this.onHitFn = fn;
     });
@@ -181,6 +216,7 @@ export class LuaHost {
     this.songCalls = 0;
     this.minigameName = "";
     this.windowOpts = {};
+    this.manifest = { sfx: {}, sprites: {} };
     this.loadError = null;
     this.onHitFn = null;
     this.onMissFn = null;
@@ -231,6 +267,7 @@ export class LuaHost {
         windows,
         minigame: this.minigameName,
         events: this.events,
+        assets: this.manifest,
       },
     };
   }

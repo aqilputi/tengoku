@@ -98,6 +98,52 @@ describe("LuaHost — carga do chart", () => {
   });
 });
 
+describe("LuaHost — assets{} (DSL v2-A)", () => {
+  it("manifesto é opcional: default vazio", async () => {
+    const r = await host.loadChart(MINIMAL_SONG);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.chart.assets).toEqual({ sfx: {}, sprites: {} });
+  });
+
+  it("sfx flat, sfx com variantes e sprites por pose", async () => {
+    const lua = `
+      ${MINIMAL_SONG}
+      assets({
+        sfx = {
+          clap1 = "assets/sfx/clap1.wav",
+          clap = { clean = "assets/sfx/clap_clean.wav", weak = "assets/sfx/clap_weak.wav" },
+        },
+        sprites = {
+          trio1 = { idle = "assets/sprites/trio1_idle.svg", clap = "assets/sprites/trio1_clap.svg" },
+        },
+      })
+    `;
+    const r = await host.loadChart(lua);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.chart.assets).toEqual({
+      sfx: {
+        clap1: "assets/sfx/clap1.wav",
+        clap: { clean: "assets/sfx/clap_clean.wav", weak: "assets/sfx/clap_weak.wav" },
+      },
+      sprites: {
+        trio1: { idle: "assets/sprites/trio1_idle.svg", clap: "assets/sprites/trio1_clap.svg" },
+      },
+    });
+  });
+
+  it("caminho fora de assets/ é erro de conteúdo (sandbox de caminho)", async () => {
+    const bad = `${MINIMAL_SONG}
+assets({ sfx = { x = "/etc/passwd" } })`;
+    const r = await host.loadChart(bad);
+    expect(r.ok).toBe(false);
+    const bad2 = `${MINIMAL_SONG}
+assets({ sprites = { a = { idle = "http://mal.com/x.png" } } })`;
+    expect((await host.loadChart(bad2)).ok).toBe(false);
+  });
+});
+
 describe("LuaHost — validação (erro de conteúdo nunca vira estado parcial)", () => {
   const cases: Array<[string, string]> = [
     ["sem song{}", `cue(1)`],

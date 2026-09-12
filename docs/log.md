@@ -14,6 +14,18 @@ Cada entrada: data, tipo (`decisão` | `pesquisa` | `progresso` | `grading`), re
 
 ---
 
+## 2026-09-11 — progresso — DSL v2: assets{} + dev-mode implementados (134 testes)
+
+Peças A e C do [authoring.md](authoring.md), TDD: `assets{}` no LuaHost (sfx flat
+e com variantes → registra nome_variante; sprites por pose; validação de caminho
+em assets/ — /etc/passwd e http:// são erro de conteúdo); `loadManifest` no core
+com loaders injetáveis (override local por basename PRIMEIRO; ausência vira
+`missing` + fallback synth/vetorial, nunca lança). Dev-mode: `?chart=/local/meu.lua`
+(só caminho relativo — origem externa recusada; hot-reload por polling só em dev)
+e `?offset` (offset finder: média CIRCULAR dos taps módulo beat — offset ~0 não
+enrola para ~beatDur; testado). trio.lua agora declara seu manifesto; luacheck
+ganhou os globals novos. Falta B (actors{} + StageScene genérica).
+
 ## 2026-09-11 — decisão — Guia de authoring + proposta DSL v2
 
 Criado [authoring.md](authoring.md): como montar chart hoje (song/minigame/sfx/

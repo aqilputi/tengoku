@@ -102,11 +102,15 @@ on_miss(function(b) anim("jogador", "errar") end)
 
 | Peça | O quê | Esforço |
 |---|---|---|
-| **A. `assets{}`** | DSL + carregamento por manifesto (`tryLoadAudio`/`tryLoadImage` já existem); nomes de SFX deixam de ser hardcoded; `play_sfx("clap","clean")` resolve variantes pelo manifesto | pequeno |
-| **B. `actors{}` + StageScene** | Cena genérica: desenha atores nas posições, troca pose por `anim` (impulso volta a `idle`), squash/bounce padrão no beat; `poseFor` já é o modelo | médio |
-| **C. Dev-mode** | `?chart=/local/meu.lua` carrega chart de fora do bundle; hot-reload por polling do arquivo; **offset finder**: tela de debug que toca a música e marca taps → sugere `offset` (mediana, reuso da calibração) | médio |
+| **A. `assets{}`** | ✅ IMPLEMENTADO — DSL no LuaHost (validação de caminho em assets/), `loadManifest` no core (override local por basename > repo; ausência vira fallback: synth/vetorial); variantes registram `nome_variante` | — |
+| **B. `actors{}` + StageScene** | Cena genérica: desenha atores nas posições, troca pose por `anim` (impulso volta a `idle`); `poseFor` já é o modelo | médio |
+| **C. Dev-mode** | ✅ IMPLEMENTADO — `?chart=/local/meu.lua` (só caminho relativo; hot-reload por polling em dev) e `?offset` (offset finder: toca a música crua, taps no beat → média circular sugere `song{ offset }`) | — |
 
-Ordem recomendada: A → C → B (o dev-mode acelera todo o resto).
+Falta só o B. Fluxo de autoria hoje:
+1. solte a música em `public/local/music.webm` e o chart em `public/local/meu.lua`
+2. abra `http://localhost:5173/?chart=/local/meu.lua&offset` → bata no beat → copie o `offset`
+3. edite o chart (`song{ offset = ... }`, cues/expects, `assets{}`) — salvar recarrega sozinho
+4. tire o `&offset` da URL e jogue
 
 ### O que NÃO muda
 

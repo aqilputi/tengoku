@@ -19,6 +19,8 @@ import { Judge, cuesFromEvents } from "./core/Judge";
 import { applyAutosound } from "./core/autosound";
 import { LuaHost } from "./lua/LuaHost";
 import { tryLoadAudio, tryLoadImage } from "./core/AssetLoader";
+import { loadManifest, resolveChartParam } from "./core/manifest";
+import { runOffsetFinder } from "./debug/offsetFinder";
 import { Renderer } from "./render/Renderer";
 import { ClappyScene } from "./render/minigames/clappy";
 import { TrioScene, type TrioSprites } from "./render/minigames/trio";
@@ -178,8 +180,34 @@ async function main() {
 
   const { ctx, unreliableTimestamps } = await bootScreen(ui);
 
+  // dev-mode C: ?chart=/local/meu.lua carrega chart de fora do bundle
+  const chartUrl = resolveChartParam(location.search);
+  let chartSource = trioChart;
+  if (chartUrl) {
+    try {
+      const res = await fetch(chartUrl, { cache: "no-store" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      chartSource = await res.text();
+    } catch (e) {
+      fatalError(ui, `não consegui carregar ${chartUrl}: ${String(e)}`);
+      return;
+    }
+    // hot-reload: mudou o arquivo => recarrega a página (só em dev)
+    if (import.meta.env.DEV) {
+      const original = chartSource;
+      setInterval(async () => {
+        try {
+          const t = await (await fetch(chartUrl, { cache: "no-store" })).text();
+          if (t !== original) location.reload();
+        } catch {
+          /* servidor fora do ar: ignora */
+        }
+      }, 2000);
+    }
+  }
+
   const host = await LuaHost.create(wasmUrl);
-  const loaded = await host.loadChart(trioChart);
+  const loaded = await host.loadChart(chartSource);
   if (!loaded.ok) {
     fatalError(ui, loaded.error);
     return;
@@ -197,7 +225,14 @@ async function main() {
   sfx.register("miss", (await local("miss.wav")) ?? makeTone(ctx, 160, 0.15));
   // música: override local > caminho do chart (webm -> m4a, cadeia A11)
   const chartAudio = "/" + loaded.chart.song.audio;
-  // sprites: override local (png/svg do usuário) > sprites originais do repo
+  // manifesto assets{} do chart (v2-A): registra SFX e carrega sprites;
+  // ausência mantém os fallbacks (synth acima, vetorial na cena)
+  const manifest = await loadManifest(ctx, sfx, loaded.chart.assets, tryLoadAudio, tryLoadImage);
+  if (manifest.missing.length > 0) {
+    console.warn("[assets] não carregados (usando fallback):", manifest.missing.join(", "));
+  }
+
+  // sprites do trio: manifesto (trio1/2/3) > override local > SVGs do repo
   const sprites: TrioSprites = {};
   const poses: Array<[0 | 1 | 2, string]> = [
     [0, "idle"], [0, "clap"],
@@ -207,11 +242,14 @@ async function main() {
   await Promise.all(
     poses.map(async ([m, pose]) => {
       const n = m + 1;
-      const img = await tryLoadImage([
-        `/local/trio${n}_${pose}.png`,
-        `/local/trio${n}_${pose}.svg`,
-        `/assets/sprites/trio${n}_${pose}.svg`,
-      ]);
+      const fromManifest = manifest.sprites[`trio${n}`]?.[pose];
+      const img =
+        fromManifest ??
+        (await tryLoadImage([
+          `/local/trio${n}_${pose}.png`,
+          `/local/trio${n}_${pose}.svg`,
+          `/assets/sprites/trio${n}_${pose}.svg`,
+        ]));
       if (img) (sprites[m] ??= {})[pose as "idle" | "clap" | "sad"] = img;
     }),
   );
@@ -228,6 +266,16 @@ async function main() {
   const bootClock = new AudioClock(ctx, new TempoMap(0, [{ startBeat: 0, bpm: 120 }]));
   const input = new InputManager(bootClock, { unreliableTimestamps });
   input.attach(window); // o clock real de cada tela entra via setClock()
+
+  // dev-mode C: ?offset abre a ferramenta de offset em vez do jogo
+  if (new URLSearchParams(location.search).has("offset")) {
+    if (!music) {
+      fatalError(ui, "?offset precisa de música carregável (chart.song.audio ou public/local/music.*)");
+      return;
+    }
+    runOffsetFinder(ui, ctx, music, loaded.chart.song.segments[0]!.bpm, input);
+    return;
+  }
 
   const session: Session = { sprites, ctx, ui, renderer, host, chart: loaded.chart, sfx, input, music };
 

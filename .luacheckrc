@@ -2,7 +2,7 @@
 std = "lua54"
 read_globals = {
   -- fase de carga
-  "song", "minigame", "cue", "expect", "anim",
+  "song", "minigame", "assets", "sfx", "cue", "expect", "anim",
   "on_hit", "on_miss",
   -- fase de runtime (dentro de on_hit/on_miss)
   "play_sfx",

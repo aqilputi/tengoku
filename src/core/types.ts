@@ -56,9 +56,18 @@ export interface InputSample {
   code: string;
 }
 
+/** Manifesto de assets declarado no chart (DSL v2-A). Caminhos sempre em assets/. */
+export interface AssetManifest {
+  /** flat: nome -> caminho; com variantes: nome -> { variante -> caminho } (registra nome_variante). */
+  sfx: Record<string, string | Record<string, string>>;
+  /** nome do sprite -> { pose -> caminho }. */
+  sprites: Record<string, Record<string, string>>;
+}
+
 export interface ChartData {
   song: SongMeta;
   windows: JudgeWindows;
   minigame: string;
   events: ChartEvent[];
+  assets: AssetManifest;
 }

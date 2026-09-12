@@ -16,6 +16,30 @@ minigame("trio")({
   janela_bom = 0.09,
 })
 
+-- Manifesto de assets (DSL v2-A): o core carrega; o que faltar cai no
+-- fallback (SFX sintetizado, sprite vetorial). Override local por basename
+-- em public/local/ tem prioridade.
+assets({
+  sfx = {
+    clap1 = "assets/sfx/clap1.wav",
+    clap2 = "assets/sfx/clap2.wav",
+    clap = {
+      clean = "assets/sfx/clap_clean.wav",
+      weak = "assets/sfx/clap_weak.wav",
+    },
+    miss = "assets/sfx/miss.wav",
+  },
+  sprites = {
+    trio1 = { idle = "assets/sprites/trio1_idle.svg", clap = "assets/sprites/trio1_clap.svg" },
+    trio2 = { idle = "assets/sprites/trio2_idle.svg", clap = "assets/sprites/trio2_clap.svg" },
+    trio3 = {
+      idle = "assets/sprites/trio3_idle.svg",
+      clap = "assets/sprites/trio3_clap.svg",
+      sad = "assets/sprites/trio3_sad.svg",
+    },
+  },
+})
+
 -- uma sequência: clap1 no beat b, clap2 em b+gap, resposta em b+2*gap
 local function seq(b, gap)
   cue(b, "clap1")
