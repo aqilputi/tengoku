@@ -12,6 +12,17 @@ beforeAll(async () => {
 
 const MINIMAL_SONG = `song { audio = "assets/audio/x.ogg", bpm = 120, offset = 0, title = "t" }`;
 
+describe("LuaHost — guard anti-CDN (A5)", () => {
+  it("em browser, create() sem wasmUri é recusado (default buscaria unpkg)", async () => {
+    (globalThis as Record<string, unknown>).window = {};
+    try {
+      await expect(LuaHost.create()).rejects.toThrow(/glue\.wasm/);
+    } finally {
+      delete (globalThis as Record<string, unknown>).window;
+    }
+  });
+});
+
 describe("LuaHost — carga do chart", () => {
   it("chart mínimo carrega com defaults (janelas 45/90, segments do bpm)", async () => {
     const r = await host.loadChart(MINIMAL_SONG);

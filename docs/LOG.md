@@ -5,6 +5,27 @@ Cada entrada: data, tipo (`decisão` | `pesquisa` | `progresso` | `grading`), re
 
 ---
 
+## 2026-09-11 — progresso — M5 implementado: chart Lua dirige o jogo (85 testes verdes)
+
+A parte automatizável do aceite M5 virou **teste de integração ponta-a-ponta**
+(test/integration/gameloop.test.ts) rodando charts/musica1.lua REAL pelos módulos
+reais nos 3 cenários do aceite: (A) jogador perfeito — 24/24 perfect, erro médio 0,
+Lua reage a cada hit (clap_clean/bater), zero drop no scheduler; (B) sem tocar —
+24 misses por omissão, jogo não trava; (C) esmagando input a 50ms — contabilidade
+fecha (hits+misses == julgamentos), nenhum cue pendente. Quarto cenário: chart
+HOSTIL com on_miss que lança — julgamento completa, breaker arma em 5.
+
+ClappyScene: animação como função pura de beat (impulse), estado por âncoras,
+zero alocação no draw; personagens em canvas até a arte existir. main.ts final:
+boot → LuaHost(wasm via ?url) → chart → TempoMap/Scheduler/Judge/cena → play;
+erro de chart é tela fatal-amigável.
+
+Guard anti-CDN testado: em browser, LuaHost.create() sem wasmUri lança (o default
+do wasmoon buscaria unpkg em runtime). Preview verificado: glue.wasm servido local
+com MIME application/wasm.
+
+Aceite manual M5 pendente: jogar no browser (visual/feel), trocar de aba no meio.
+
 ## 2026-09-11 — progresso — M4 implementado via TDD (74 testes verdes; aceite M4 automatizado)
 
 LuaHost + api.ts + charts/musica1.lua, red→green no vitest (wasmoon roda em Node).

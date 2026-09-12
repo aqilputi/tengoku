@@ -1,7 +1,10 @@
 /**
- * Demo dos aceites M1/M2/M3: metrônomo agendado + expect em cada beat.
- * Bata ESPAÇO (ou toque) no beat; HUD (F1) mostra erro em ms de cada batida.
+ * M5: o chart Lua dirige o jogo de ponta a ponta.
+ * Sem assets de arte/música ainda: sons sintetizados + personagens em canvas.
+ * ESPAÇO ou toque para responder às chamadas. F1: HUD de diagnóstico.
  */
+import wasmUrl from "wasmoon/dist/glue.wasm?url"; // A5: NUNCA o default (CDN unpkg)
+import musica1 from "../charts/musica1.lua?raw";
 import { bootScreen } from "./ui/boot";
 import { AudioClock } from "./core/AudioClock";
 import { TempoMap } from "./core/TempoMap";
@@ -10,18 +13,33 @@ import { Scheduler } from "./core/Scheduler";
 import { WorkerTicker } from "./core/Ticker";
 import { InputManager } from "./core/InputManager";
 import { Judge, cuesFromEvents } from "./core/Judge";
+import { LuaHost } from "./lua/LuaHost";
 import { Renderer } from "./render/Renderer";
+import { ClappyScene } from "./render/minigames/clappy";
 import { DiagnosticsHud } from "./debug/diagnostics";
-import type { ChartEvent, InputSample, JudgementResult } from "./core/types";
+import type { InputSample } from "./core/types";
 
-function makeClick(ctx: AudioContext, freq: number): AudioBuffer {
-  const len = Math.round(ctx.sampleRate * 0.03);
+function makeTone(ctx: AudioContext, freq: number, dur = 0.05, shape: "sine" | "noise" = "sine"): AudioBuffer {
+  const len = Math.round(ctx.sampleRate * dur);
   const buf = ctx.createBuffer(1, len, ctx.sampleRate);
   const ch = buf.getChannelData(0);
   for (let i = 0; i < len; i++) {
-    ch[i] = Math.sin((2 * Math.PI * freq * i) / ctx.sampleRate) * (1 - i / len) * 0.5;
+    const env = 1 - i / len;
+    ch[i] =
+      shape === "sine"
+        ? Math.sin((2 * Math.PI * freq * i) / ctx.sampleRate) * env * 0.5
+        : (Math.random() * 2 - 1) * env * env * 0.35;
   }
   return buf;
+}
+
+function fatalError(ui: HTMLElement, msg: string): void {
+  const div = document.createElement("div");
+  div.style.cssText =
+    "position:absolute;inset:0;display:flex;align-items:center;justify-content:center;" +
+    "background:#111;color:#ff8a80;font:16px monospace;padding:32px;white-space:pre-wrap";
+  div.textContent = `erro no chart:\n\n${msg}`;
+  ui.appendChild(div);
 }
 
 async function main() {
@@ -32,41 +50,59 @@ async function main() {
 
   const { ctx, unreliableTimestamps } = await bootScreen(ui);
 
-  const BPM = 120;
-  const tempoMap = new TempoMap(0, [{ startBeat: 0, bpm: BPM }]);
+  // ---- carga do chart (Lua) ----
+  const host = await LuaHost.create(wasmUrl);
+  const loaded = await host.loadChart(musica1);
+  if (!loaded.ok) {
+    fatalError(ui, loaded.error);
+    return; // erro de conteúdo é fatal-amigável: nada de estado parcial
+  }
+  const chart = loaded.chart;
+
+  // ---- montagem do core a partir do chart ----
+  const tempoMap = new TempoMap(chart.song.offset, chart.song.segments);
   const clock = new AudioClock(ctx, tempoMap);
   const sfx = new SfxPlayer(ctx);
-  sfx.register("tick", makeClick(ctx, 880));
-  sfx.register("tock", makeClick(ctx, 1760));
-  sfx.register("hit", makeClick(ctx, 2640));
-  sfx.warmup();
-
-  // chart de teste: metrônomo 3min + expect em cada beat (aceite M3)
-  const events: ChartEvent[] = [];
-  const totalBeats = Math.ceil((180 * BPM) / 60);
-  for (let b = 0; b < totalBeats; b++) {
-    events.push({ kind: "sfx", beat: b, name: b % 4 === 0 ? "tock" : "tick" });
-    events.push({ kind: "expect", beat: b });
-  }
+  sfx.register("call", makeTone(ctx, 880, 0.08));
+  sfx.register("clap_clean", makeTone(ctx, 0, 0.06, "noise"));
+  sfx.register("clap_weak", makeTone(ctx, 0, 0.04, "noise"));
+  sfx.register("miss", makeTone(ctx, 160, 0.15));
+  sfx.warmup(); // A8
 
   const sched = new Scheduler(clock, sfx, new WorkerTicker());
-  sched.load(events, tempoMap);
+  sched.load(chart.events, tempoMap);
 
-  const judge = new Judge(clock, { perfectMs: 45, goodMs: 90 });
-  judge.load(cuesFromEvents(events, tempoMap));
+  const judge = new Judge(clock, chart.windows);
+  judge.load(cuesFromEvents(chart.events, tempoMap));
 
   const input = new InputManager(clock, { unreliableTimestamps });
   input.attach(window);
 
-  // feedback audível imediato no hit (fora do lookahead — A2)
-  judge.onJudgement((r: JudgementResult) => {
-    if (r.verdict !== "miss") sfx.playNow("hit", r.verdict === "perfect" ? 1 : 0.5);
+  const scene = new ClappyScene();
+  sched.onVisualEvent((ev) => scene.onChartEvent(ev));
+
+  // runtime Lua -> áudio/cena (reação imediata, fora do lookahead — A2)
+  host.setRuntimeHandlers({
+    playSfx: (name, variant) => sfx.playNow(variant ? `${name}_${variant}` : name),
+    anim: (target, name) => scene.onAnim(target, name, clock.visualBeat),
   });
 
-  clock.start(null, 0.15);
+  // Judge -> Lua + cena (ponto ÚNICO de entrada da Lua em runtime)
+  judge.onJudgement((r) => {
+    scene.onJudgement(r);
+    if (r.verdict !== "miss") {
+      host.notifyHit(r.verdict, r.cue!.beat);
+    } else {
+      if (!r.cue) scene.sadAt(clock.visualBeat); // input extra: ancora "agora"
+      sfx.playNow("miss", 0.6);
+      host.notifyMiss(r.cue ? r.cue.beat : tempoMap.timeToBeat(r.inputTime ?? clock.songTime));
+    }
+  });
+
+  clock.start(null, 0.5); // sem música ainda; lead-in maior p/ o jogador se situar
   sched.start();
 
-  // aba oculta => pause real (armadilha #3); inputs do limbo descartados
+  // aba oculta => pause real (armadilha #3)
   document.addEventListener("visibilitychange", async () => {
     if (document.hidden) {
       sched.pause();
@@ -84,35 +120,12 @@ async function main() {
     source: "key" as const,
     code: "",
   }));
-  let flash = 0; // pulso visual do último julgamento
-  judge.onJudgement((r) => {
-    flash = r.verdict === "perfect" ? 1 : r.verdict === "good" ? 0.6 : -1;
-  });
 
   renderer.onFrame((g, w, h) => {
-    // julgamento no rAF: drena input -> submit -> update
     const n = input.drain(drainBuf);
     for (let i = 0; i < n; i++) judge.submit(drainBuf[i]!);
     judge.update();
-
-    // pulso no beat (visualBeat — offset visual, não de áudio)
-    const phase = clock.visualBeat % 1;
-    const r = 40 + 24 * Math.max(0, 1 - phase * 4);
-    g.beginPath();
-    g.arc(w / 2, h / 2, r, 0, Math.PI * 2);
-    g.fillStyle = Math.floor(clock.visualBeat) % 4 === 0 ? "#ff5252" : "#4fc3f7";
-    g.fill();
-
-    // anel de feedback do julgamento
-    if (flash !== 0) {
-      g.beginPath();
-      g.arc(w / 2, h / 2, 80, 0, Math.PI * 2);
-      g.lineWidth = 6;
-      g.strokeStyle = flash > 0 ? (flash === 1 ? "#7CFC00" : "#ffd54f") : "#ff1744";
-      g.stroke();
-      flash *= 0.9;
-      if (Math.abs(flash) < 0.05) flash = 0;
-    }
+    scene.draw(g, w, h, clock.visualBeat, clock.visualTime);
     hud.draw(g);
   });
 }

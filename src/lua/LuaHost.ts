@@ -65,6 +65,13 @@ export class LuaHost {
   }
 
   static async create(wasmUri?: string): Promise<LuaHost> {
+    // A5: em browser, o default do LuaFactory busca o wasm no CDN unpkg em
+    // runtime — proibido (offline/CSP). O bundle DEVE passar o asset ?url.
+    if (!wasmUri && typeof window !== "undefined") {
+      throw new Error(
+        'LuaHost.create: passe o glue.wasm local (import wasmUrl from "wasmoon/dist/glue.wasm?url")',
+      );
+    }
     const factory = new LuaFactory(wasmUri);
     return new LuaHost(factory);
   }
