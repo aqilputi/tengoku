@@ -97,6 +97,26 @@ describe("InputManager", () => {
     expect(s.im.drain(s.out)).toBe(64);
   });
 
+  it("setClock() troca o relógio de conversão entre partidas (e limpa a fila)", async () => {
+    const a = setup();
+    await a.start();
+    a.tick(5.0);
+    a.im.handleKey("Space", false, a.wall.ms);
+    // nova "partida": clock novo ancorado agora, compartilhando a mesma parede
+    const ctx2 = new MockAudioContext();
+    ctx2.outputLatency = 0;
+    const tm2 = new TempoMap(0, [{ startBeat: 0, bpm: 120 }]);
+    const clock2 = new AudioClock(ctx2 as unknown as AudioContext, tm2, a.wall.now);
+    await ctx2.resume();
+    clock2.start(null, 0);
+    a.im.setClock(clock2);
+    expect(a.im.drain(a.out)).toBe(0); // fila antiga descartada
+    ctx2.advance(1.5); a.wall.advance(1500);
+    a.im.handleKey("Space", false, a.wall.ms);
+    a.im.drain(a.out);
+    expect(a.out[0]!.time).toBeCloseTo(1.5, 6); // convertido pelo clock NOVO
+  });
+
   it("clear() descarta inputs do limbo (usado no resume do pause)", async () => {
     const s = setup();
     await s.start();

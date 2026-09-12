@@ -186,6 +186,22 @@ describe("Judge — stats e reset", () => {
     expect(s.judge.stats.medianErrorMs).toBeCloseTo(-10, 6);
   });
 
+  it("breakdown para o rank (M6): perfects/goods/omissions/extras separados", async () => {
+    const s = setup([cue(0, 1.0), cue(1, 2.0), cue(2, 3.0), cue(3, 4.0)]);
+    await s.start();
+    s.at(1.0);  s.judge.submit(s.input(1.0));   s.judge.update(); // perfect
+    s.at(2.06); s.judge.submit(s.input(2.06));  s.judge.update(); // good (+60ms)
+    s.at(2.5);  s.judge.submit(s.input(2.5));   s.judge.update(); // extra
+    s.at(3.2);  s.judge.update();                                  // omissão
+    s.at(4.0);  s.judge.submit(s.input(4.0));   s.judge.update(); // perfect
+    expect(s.judge.stats.perfects).toBe(2);
+    expect(s.judge.stats.goods).toBe(1);
+    expect(s.judge.stats.omissions).toBe(1);
+    expect(s.judge.stats.extras).toBe(1);
+    expect(s.judge.stats.hits).toBe(3);
+    expect(s.judge.stats.misses).toBe(2);
+  });
+
   it("reset limpa estado e re-arma os cues", async () => {
     const s = setup([cue(0, 1.0)]);
     await s.start();

@@ -20,7 +20,7 @@ export class InputManager {
   private static readonly QUEUE = 64;
   private static readonly DEDUPE_MS = 30;
 
-  private readonly clock: AudioClock;
+  private clock: AudioClock;
   private readonly unreliable: boolean;
   private readonly now: () => number;
 
@@ -42,6 +42,12 @@ export class InputManager {
     this.clock = clock;
     this.unreliable = opts.unreliableTimestamps ?? false;
     this.now = opts.now ?? (() => performance.now());
+  }
+
+  /** Cada partida cria um AudioClock novo; o input precisa converter com o clock ATUAL. */
+  setClock(clock: AudioClock): void {
+    this.clock = clock;
+    this.clear();
   }
 
   attach(target: HTMLElement | Window = window): void {

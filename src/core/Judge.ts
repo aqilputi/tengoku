@@ -47,6 +47,10 @@ export class Judge {
   private hitErrors: Float64Array = new Float64Array(0);
   private hitCount = 0;
   private missCount = 0;
+  private perfectCount = 0;
+  private goodCount = 0;
+  private omissionCount = 0;
+  private extraCount = 0;
 
   constructor(clock: AudioClock, windows: JudgeWindows) {
     this.clock = clock;
@@ -59,6 +63,10 @@ export class Judge {
     this.hitErrors = new Float64Array(Math.max(1, cues.length));
     this.hitCount = 0;
     this.missCount = 0;
+    this.perfectCount = 0;
+    this.goodCount = 0;
+    this.omissionCount = 0;
+    this.extraCount = 0;
     this.qHead = 0;
     this.qCount = 0;
   }
@@ -112,10 +120,13 @@ export class Judge {
         this.hitErrors[this.hitCount] = errorMs;
         this.hitCount++;
         const verdict = Math.abs(errorMs) <= this.windows.perfectMs + EPS ? "perfect" : "good";
+        if (verdict === "perfect") this.perfectCount++;
+        else this.goodCount++;
         this.emit({ verdict, cue: best, inputTime: s.time, errorMs, early: errorMs < 0 });
       } else {
         // regra RH: bateu quando não tinha cue => falha explícita
         this.missCount++;
+        this.extraCount++;
         this.emit({ verdict: "miss", cue: null, inputTime: s.time, errorMs: null, early: false });
       }
     }
@@ -128,6 +139,7 @@ export class Judge {
         if (c.time + goodS < now - EPS) {
           c.state = "missed";
           this.missCount++;
+          this.omissionCount++;
           this.emit({ verdict: "miss", cue: c, inputTime: null, errorMs: null, early: false });
         } else {
           break; // ordenado: os próximos ainda não expiraram
@@ -138,7 +150,16 @@ export class Judge {
     }
   }
 
-  get stats(): { hits: number; misses: number; meanErrorMs: number; medianErrorMs: number } {
+  get stats(): {
+    hits: number;
+    misses: number;
+    perfects: number;
+    goods: number;
+    omissions: number;
+    extras: number;
+    meanErrorMs: number;
+    medianErrorMs: number;
+  } {
     const n = this.hitCount;
     let mean = 0;
     for (let i = 0; i < n; i++) mean += this.hitErrors[i]!;
@@ -148,7 +169,16 @@ export class Judge {
       const sorted = Array.from(this.hitErrors.subarray(0, n)).sort((a, b) => a - b);
       median = n % 2 === 1 ? sorted[(n - 1) / 2]! : (sorted[n / 2 - 1]! + sorted[n / 2]!) / 2;
     }
-    return { hits: n, misses: this.missCount, meanErrorMs: mean, medianErrorMs: median };
+    return {
+      hits: n,
+      misses: this.missCount,
+      perfects: this.perfectCount,
+      goods: this.goodCount,
+      omissions: this.omissionCount,
+      extras: this.extraCount,
+      meanErrorMs: mean,
+      medianErrorMs: median,
+    };
   }
 
   reset(): void {
@@ -156,6 +186,10 @@ export class Judge {
     this.cursor = 0;
     this.hitCount = 0;
     this.missCount = 0;
+    this.perfectCount = 0;
+    this.goodCount = 0;
+    this.omissionCount = 0;
+    this.extraCount = 0;
     this.qHead = 0;
     this.qCount = 0;
   }

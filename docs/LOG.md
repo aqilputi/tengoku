@@ -5,6 +5,24 @@ Cada entrada: data, tipo (`decisão` | `pesquisa` | `progresso` | `grading`), re
 
 ---
 
+## 2026-09-11 — progresso — M6 implementado (107 testes verdes)
+
+Fluxo completo: boot → menu → calibração obrigatória no 1º uso → jogo → tela de
+resultado (faixas superb/ok/try_again, não nota) → replay. TDD na lógica pura:
+Settings (storage injetável; corrompido/versão errada ⇒ defaults; clamp A6
+−200..+500ms), computeCalibration (descarta 4 primeiras + outliers >250ms,
+mediana, <8 válidas ⇒ retry, NEGATIVO permitido), computeRank (superb exige zero
+miss/extra + ≥60% perfect — miss quebra superb, fiel ao RH), applyAutosound (A7:
+offset ≥10ms ⇒ clap agendado no beat, caminho reativo suprimido; imutável),
+breakdown do Judge (perfects/goods/omissions/extras).
+
+Bug pego na revisão pós-gate: InputManager preso ao clock de boot enquanto cada
+partida cria clock novo ⇒ conversões erradas. Fix: setClock() (limpa a fila),
+com teste de troca de relógio entre partidas. Telas em DOM puro (menu,
+calibração às cegas com contador, resultado com replay).
+
+Aceite manual M6 pendente: teste de corredor (2 pessoas, localStorage limpo).
+
 ## 2026-09-11 — progresso — M5 implementado: chart Lua dirige o jogo (85 testes verdes)
 
 A parte automatizável do aceite M5 virou **teste de integração ponta-a-ponta**
