@@ -20,6 +20,7 @@ Bundle no [Open Knowledge Format](https://cloud.google.com/blog/products/data-an
 | [plano.md](plano.md) | Implementation Plan | Execução M0–M7: interfaces TS, decisões, aceites, adendo A1–A12 |
 | [pesquisa.md](pesquisa.md) | Research Report | Evidência externa (Bemuse/taiko-web/FNF/Tone.js/wasmoon) |
 | [deploy.md](deploy.md) | Runbook | Build, headers e matriz de dispositivos |
+| [authoring.md](authoring.md) | Guide | Como criar músicas/cenas hoje e a proposta de DSL v2 |
 | [log.md](log.md) | Log | Histórico cronológico (reservado OKF) |
 
 ## Grafo

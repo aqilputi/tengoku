@@ -14,6 +14,15 @@ Cada entrada: data, tipo (`decisão` | `pesquisa` | `progresso` | `grading`), re
 
 ---
 
+## 2026-09-11 — decisão — Guia de authoring + proposta DSL v2
+
+Criado [authoring.md](authoring.md): como montar chart hoje (song/minigame/sfx/
+cue/expect/anim/on_hit/on_miss) e os 5 atritos da v1 (SFX registrados à mão no
+main, atores em TS, chart hardcoded, offset no ouvido, sem dev-mode). Proposta
+v2: `assets{}` (manifesto carregado pelo core), `actors{}` + StageScene genérica
+(conteúdo novo sem TypeScript), dev-mode `?chart=` com hot-reload e offset
+finder. Ordem: A (assets) → C (dev-mode) → B (actors/stage).
+
 ## 2026-09-11 — progresso — Sprites originais "Palmitos" + override local de imagens (121 testes)
 
 O pack baixado também não tem sprites de gameplay (busca clap/pachi/trio vazia —
