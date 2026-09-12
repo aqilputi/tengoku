@@ -588,3 +588,20 @@ Zero dependências de runtime além do `wasmoon`. Pin via `package-lock.json` co
 - [ ] Headers de produção conferidos com `curl -I`: `application/wasm`, `immutable` em assets com hash, `no-cache` no `index.html`, compressão em `.js`/`.wasm`.
 - [ ] Todos os assets (sprites, SFX, música) originais — nada da Nintendo (spec §6).
 - [ ] Fora de escopo respeitado: nenhum código de editor, multiplayer, leaderboard ou multi-música — mas `ChartData`/`MinigameScene` são interfaces que os permitem depois.
+
+---
+
+## 5. Adendo 2026-09-11 — ajustes pós-pesquisa
+
+A pesquisa em repositórios externos ([PESQUISA.md](PESQUISA.md), ajustes A1–A12)
+altera os pontos abaixo. Onde conflitar com o texto acima, **este adendo prevalece**.
+
+1. **Scheduler (M2)**: o tick roda num **Web Worker** (`src/core/scheduler.worker.ts`), não em `setInterval` na main thread — imune a throttling de aba oculta e jitter de GC (padrão Tone.js/cwilso). O worker só emite "tick"; a varredura e o `playAt` continuam na main thread. `SchedulerOptions.lookaheadS` default passa de **0.2 → 0.1**. Regra nova: **SFX dependentes de input nunca entram no lookahead** (só `playNow`); evento cujo `when` já passou é **dropado com log**, nunca tocado atrasado.
+2. **AudioClock (M1)**: leitura por frame usa **clock híbrido** estilo Bemuse — média móvel (janela de 60 amostras) de `performance.now()/1000 − ctx.currentTime`, com `songTime` derivado de `performance.now` ancorado nessa média. Corrige `currentTime` granular ("em degraus") no Android. O **agendamento** continua 100% no relógio ctx. Novo teste: `songTime` monotônico e suave sob `currentTime` que avança em degraus de 20 ms no mock.
+3. **InputManager (M1/M3)**: sanity check por evento, não só no boot — `if (e.timeStamp > performance.now() || e.timeStamp < 0) usar performance.now()` (guard do Google first-input-delay). Dedupe de input de 30 ms por tecla (taiko-web).
+4. **LuaHost (M4)**: `wasmoon` pinado **`1.16.0` exato (sem ^)**. Bootstrap obrigatório: `import wasmUrl from 'wasmoon/dist/glue.wasm?url'; new LuaFactory(wasmUrl)` — o default busca o wasm no **CDN unpkg** (proibido; teste de CI offline). `createEngine({ functionTimeout: 50 })`, `setMemoryMax(64MB)`, avaliação de carga com timeout. Sandbox ampliado: além de `io/os/require/package/load/loadfile/dofile/loadstring`, remover **`debug`, `string.dump`, `collectgarbage`, `print`** (logger próprio via `global.set`). `LuaFactory` singleton; um `LuaEngine` por chart; `global.close()` ao descarregar; nunca `newThread()` por evento (leak corrigido só na main, não lançado).
+5. **SfxPlayer (M2)**: `warmup()` no início da fase (1 ms de buffer, gain 0) para eliminar o primeiro som atrasado; **autosound** quando `audioOffset ≥ 10 ms` — o SFX de resposta é agendado no beat esperado em vez de disparado no hit (Bemuse; essencial em Bluetooth).
+6. **Calibração (M6)**: offset **negativo permitido**, faixa −200..+500 ms; duas fases — áudio às cegas (16 batidas, mediana, descarta 4 + outliers >250 ms) e depois visual; silenciar qualquer outra música durante.
+7. **AudioContext**: criar com `latencyHint: 'interactive'`. `outputLatency` com feature-detect e relido durante a sessão (muda ao trocar de dispositivo; Safari só ≥18.4).
+8. **Judge (M3)**: documentado como decisão consciente — input fora da janela de qualquer cue é punido como miss (fiel ao Rhythm Heaven), enquanto Bemuse/FNF/taiko ignoram. Manter a regra anti-roubo já prevista (nearest dentro da janela).
+9. **Assets (M0+)**: música em **WebM/Opus com fallback AAC (.m4a)** — Safari não decodifica OGG Vorbis (confirma decisão do M7; antecipar spike para M1). Reforço da regra de assets originais: o taiko-web original foi derrubado por DMCA da Bandai Namco.
