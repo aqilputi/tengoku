@@ -3,7 +3,7 @@
  * ESPAÇO ou toque para responder. F1: HUD de diagnóstico.
  */
 import wasmUrl from "wasmoon/dist/glue.wasm?url"; // A5: NUNCA o default (CDN unpkg)
-import musica1 from "../charts/musica1.lua?raw";
+import trioChart from "../charts/trio.lua?raw";
 import { bootScreen } from "./ui/boot";
 import { showMenu } from "./ui/menu";
 import { runCalibration } from "./ui/calibration";
@@ -18,8 +18,10 @@ import { InputManager } from "./core/InputManager";
 import { Judge, cuesFromEvents } from "./core/Judge";
 import { applyAutosound } from "./core/autosound";
 import { LuaHost } from "./lua/LuaHost";
+import { tryLoadAudio } from "./core/AssetLoader";
 import { Renderer } from "./render/Renderer";
 import { ClappyScene } from "./render/minigames/clappy";
+import { TrioScene } from "./render/minigames/trio";
 import { DiagnosticsHud } from "./debug/diagnostics";
 import type { ChartData, InputSample } from "./core/types";
 
@@ -54,6 +56,7 @@ interface Session {
   chart: ChartData;
   sfx: SfxPlayer;
   input: InputManager;
+  music: AudioBuffer | null;
 }
 
 /** Uma partida completa; resolve com o resultado no fim da música. */
@@ -72,7 +75,7 @@ function playSong(s: Session, audioOffsetS: number, visualOffsetS: number): Prom
     const cues = cuesFromEvents(events, tempoMap);
     judge.load(cues);
 
-    const scene = new ClappyScene();
+    const scene = s.chart.minigame === "trio" ? new TrioScene() : new ClappyScene();
     sched.onVisualEvent((ev) => scene.onChartEvent(ev));
 
     s.host.setRuntimeHandlers({
@@ -98,7 +101,7 @@ function playSong(s: Session, audioOffsetS: number, visualOffsetS: number): Prom
     const endTime = (lastEvent ? tempoMap.beatToTime(lastEvent.beat) : 0) + 2.0;
 
     s.input.setClock(clock); // conversões desta partida usam ESTE clock
-    clock.start(null, 0.5);
+    clock.start(s.music, 0.5); // com música local se houver; senão só SFX agendados
     sched.start();
 
     const onVisibility = async () => {
@@ -174,24 +177,30 @@ async function main() {
   const { ctx, unreliableTimestamps } = await bootScreen(ui);
 
   const host = await LuaHost.create(wasmUrl);
-  const loaded = await host.loadChart(musica1);
+  const loaded = await host.loadChart(trioChart);
   if (!loaded.ok) {
     fatalError(ui, loaded.error);
     return;
   }
 
   const sfx = new SfxPlayer(ctx);
+  // fallbacks sintetizados; override local em public/local/ (gitignore) tem prioridade
+  const local = async (file: string) => tryLoadAudio(ctx, [`/local/${file}`]);
   sfx.register("call", makeTone(ctx, 880, 0.08));
-  sfx.register("clap_clean", makeTone(ctx, 0, 0.06, "noise"));
-  sfx.register("clap_weak", makeTone(ctx, 0, 0.04, "noise"));
-  sfx.register("miss", makeTone(ctx, 160, 0.15));
+  sfx.register("clap1", (await local("clap1.wav")) ?? makeTone(ctx, 0, 0.05, "noise"));
+  sfx.register("clap2", (await local("clap2.wav")) ?? makeTone(ctx, 0, 0.04, "noise"));
+  const playerClap = await local("clap_player.wav");
+  sfx.register("clap_clean", playerClap ?? makeTone(ctx, 0, 0.06, "noise"));
+  sfx.register("clap_weak", playerClap ?? makeTone(ctx, 0, 0.03, "noise"));
+  sfx.register("miss", (await local("miss.wav")) ?? makeTone(ctx, 160, 0.15));
+  const music = await tryLoadAudio(ctx, ["/local/music.webm", "/local/music.m4a", "/local/music.ogg"]);
   sfx.warmup(); // A8
 
   const bootClock = new AudioClock(ctx, new TempoMap(0, [{ startBeat: 0, bpm: 120 }]));
   const input = new InputManager(bootClock, { unreliableTimestamps });
   input.attach(window); // o clock real de cada tela entra via setClock()
 
-  const session: Session = { ctx, ui, renderer, host, chart: loaded.chart, sfx, input };
+  const session: Session = { ctx, ui, renderer, host, chart: loaded.chart, sfx, input, music };
 
   const settings = Settings.load();
   for (;;) {

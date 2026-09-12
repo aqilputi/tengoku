@@ -6,13 +6,9 @@ build 100% estático.
 
 ## Documentação
 
-| Doc | O quê |
-|---|---|
-| [docs/OKR.md](docs/OKR.md) | Objetivos e Key Results do ciclo v1 (formato Google, scoring 0.0–1.0) |
-| [docs/SPEC.md](docs/SPEC.md) | Especificação técnica: arquitetura, timing, formato de chart, armadilhas |
-| [docs/PLANO.md](docs/PLANO.md) | Plano de implementação M0–M7: interfaces TS, decisões, testes (+ adendo pós-pesquisa) |
-| [docs/PESQUISA.md](docs/PESQUISA.md) | Validação dos requisitos em repositórios externos (Bemuse, taiko-web, FNF, Tone.js, wasmoon) |
-| [docs/LOG.md](docs/LOG.md) | Log de decisões, pesquisa e progresso |
+Bundle [OKF (Open Knowledge Format)](https://cloud.google.com/blog/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing/)
+em [docs/index.md](docs/index.md): [spec](docs/spec.md) · [plano](docs/plano.md) ·
+[pesquisa](docs/pesquisa.md) · [deploy](docs/deploy.md) · [log](docs/log.md)
 
 ## Toolchain
 

@@ -1,10 +1,19 @@
+---
+type: Research Report
+title: Validação de requisitos em repositórios externos
+description: Pesquisa em Bemuse, taiko-web, FNF, Tone.js, Chris Wilson e wasmoon que valida a [spec.md](spec.md) e gera os ajustes A1–A12 do [plano.md](plano.md).
+resource: https://github.com/aqilputi/tengoku
+tags: [pesquisa, timing, wasmoon, benchmarks]
+timestamp: 2026-09-11T21:00:00Z
+---
+
 # PESQUISA — Validação de requisitos em repositórios externos
 
 Data: 2026-09-11. Três frentes pesquisadas em paralelo (agentes com WebSearch/WebFetch,
 modelo Fable): engines de rhythm game no browser, referências canônicas de timing
 Web Audio, e estado do wasmoon. Fontes citadas inline em cada parte.
 
-Relacionados: [SPEC.md](SPEC.md) · [PLANO.md](PLANO.md) · [OKR.md](OKR.md) · [LOG.md](LOG.md)
+Relacionados: [spec.md](spec.md) · [plano.md](plano.md) · [log.md](log.md)
 
 ---
 
@@ -15,7 +24,7 @@ são literalmente o Perfect/Great do StepMania Judge 4 e o Sick/Good do FNF atua
 lookahead + `start(when)` é o padrão canônico; wasmoon confirmado (com precedente
 de runtimes sandboxed construídos sobre ele).
 
-**Ajustes adotados** (aplicados como adendo no PLANO.md):
+**Ajustes adotados** (aplicados como adendo no plano.md):
 
 | # | Ajuste | Evidência |
 |---|---|---|

@@ -1,3 +1,12 @@
+---
+type: Specification
+title: Engine de jogo de ritmo para browser
+description: Especificação técnica — arquitetura, núcleo de timing, formato de chart Lua, milestones e armadilhas conhecidas.
+resource: https://github.com/aqilputi/tengoku
+tags: [engine, web-audio, lua, timing]
+timestamp: 2026-09-11T21:00:00Z
+---
+
 # Engine de jogo de ritmo para browser — plano de implementação
 
 > Documento de especificação para ser entregue ao Claude Code.

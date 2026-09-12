@@ -1,3 +1,12 @@
+---
+type: Log
+title: Histórico do projeto
+description: Histórico cronológico de decisões, pesquisa e progresso (mais recente no topo).
+resource: https://github.com/aqilputi/tengoku
+tags: [log, decisões]
+timestamp: 2026-09-11T21:00:00Z
+---
+
 # LOG — Tengoku
 
 Log de decisões, pesquisa e progresso. Entradas mais recentes no topo.
@@ -5,11 +14,45 @@ Cada entrada: data, tipo (`decisão` | `pesquisa` | `progresso` | `grading`), re
 
 ---
 
+## 2026-09-11 — progresso — Minigame "trio" (mecânica do The Clappy Trio) + docs em OKF (118 testes)
+
+Pesquisada a mecânica do The Clappy Trio (Rhythm Tengoku) em wikis de fãs: fila de
+três, os dois primeiros batem em sequência, o jogador (3º) fecha mantendo o
+intervalo; vereditos perfeito/quase("tick")/miss com a fila encarando o jogador no
+erro. Reproduzida SÓ a mecânica: charts/trio.lua (fases de 1 beat, meio beat e
+alternadas, 118 BPM), TrioScene com três personagens ORIGINAIS (cápsulas listradas,
+design próprio) e sons sintetizados. Testes garantem a estrutura (toda sequência é
+clap1→clap2→expect com gaps iguais ∈ {1, 0.5}; frases não se sobrepõem).
+
+Assets locais: public/local/ (gitignore) com README — o jogo tenta carregar
+música/claps de lá via tryLoadAudio (fontes em ordem, nunca lança, null ⇒ synth)
+e usa override do usuário quando presente. Material de terceiros não entra no repo
+e não é baixado pelo projeto.
+
+Documentação convertida de OKR (leitura errada minha) para OKF — ver entrada acima.
+
+## 2026-09-11 — decisão — Documentação convertida para OKF (Open Knowledge Format)
+
+Correção de rumo: o formato pedido era o [OKF do Google Cloud](https://cloud.google.com/blog/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing/)
+(markdown + YAML frontmatter, 1 arquivo = 1 conceito, bundle com [index.md](index.md)
+e log.md reservado, links formando grafo) — não OKR. OKR.md removido; conceitos
+renomeados para minúsculas ([spec.md](spec.md), [plano.md](plano.md),
+[pesquisa.md](pesquisa.md), [deploy.md](deploy.md)); frontmatter com
+type/title/description/resource/tags/timestamp em todos; [index.md](index.md) criado.
+
+## 2026-09-11 — decisão — Assets locais para teste (fora do repo)
+
+`public/local/` adicionado ao .gitignore: diretório para o usuário colocar assets
+próprios de teste local (música/SFX). O AssetLoader tenta carregar de lá e cai para
+os sons sintetizados quando ausente. Assets de terceiros NUNCA entram no repositório
+(spec §6); o assistente não baixa material da Nintendo — o slot existe para arquivos
+que o usuário já possua, sob responsabilidade dele.
+
 ## 2026-09-11 — progresso — M7: artefatos de deploy prontos
 
 `public/_headers` (Cloudflare Pages, copiado pro dist no build — verificado),
 `deploy/nginx.conf.example` (MIME wasm, immutable/no-cache, gzip sem áudio) e
-`docs/DEPLOY.md` com os comandos curl de verificação de headers e a matriz de
+`docs/deploy.md` com os comandos curl de verificação de headers e a matriz de
 teste manual (Chrome/Firefox/Safari/Android/iOS; aceite = iPhone + Bluetooth).
 Bundle final: wasm 271KB (111KB gz) + js 140KB (47KB gz).
 
@@ -150,11 +193,11 @@ Se um dia charts virarem pacotes distribuíveis: luarocks + rockspec + busted.
 
 ## 2026-09-11 — pesquisa/decisão — Resultados da pesquisa externa: 12 ajustes adotados
 
-As três frentes concluíram (relatórios consolidados em [PESQUISA.md](PESQUISA.md)).
+As três frentes concluíram (relatórios consolidados em [pesquisa.md](pesquisa.md)).
 Núcleo da spec **validado**: relógio mestre = áudio é unânime; janelas ±45/±90 ms são
 exatamente o StepMania Judge 4 e o FNF atual; wasmoon confirmado com precedente real.
 
-Ajustes A1–A12 adotados e aplicados como adendo no [PLANO.md](PLANO.md). Principais:
+Ajustes A1–A12 adotados e aplicados como adendo no [plano.md](plano.md). Principais:
 tick do Scheduler em **Web Worker**; lookahead 200→**100 ms** com SFX de input fora do
 lookahead; **clock híbrido** (média móvel perf↔ctx, 60 amostras) contra `currentTime`
 granular no Android; wasmoon **1.16.0 pinado** + `glue.wasm` via `?url` (default busca
@@ -168,7 +211,7 @@ clamp de offset em ≥0 (Bemuse #531).
 
 ## 2026-09-11 — pesquisa — Pesquisa de requisitos em repositórios externos
 
-Disparada pesquisa em três frentes (resultados consolidados em [PESQUISA.md](PESQUISA.md)):
+Disparada pesquisa em três frentes (resultados consolidados em [pesquisa.md](pesquisa.md)):
 
 1. **Engines de ritmo web existentes** — Bemuse, taiko-web, FNF e afins: como sincronizam
    áudio, agendam notas, julgam input e calibram latência.
@@ -178,17 +221,16 @@ Disparada pesquisa em três frentes (resultados consolidados em [PESQUISA.md](PE
 3. **wasmoon** — atividade do projeto, integração com Vite, API de callbacks,
    práticas de sandbox, comparação com fengari.
 
-Motivação: o plano (PLANO.md) foi derivado apenas da SPEC.md, sem validação externa.
+Motivação: o plano (plano.md) foi derivado apenas da spec.md, sem validação externa.
 
 ## 2026-09-11 — decisão — Documentação reorganizada em formato OKR
 
-Estrutura: OKR.md (objetivos e key results do ciclo v1, formato Google com
-scoring 0.0–1.0) → SPEC.md (o quê/como técnico) → PLANO.md (execução M0–M7)
-→ PESQUISA.md (evidências externas) → LOG.md (este arquivo).
+Estrutura: spec.md (o quê/como técnico) → plano.md (execução M0–M7)
+→ pesquisa.md (evidências externas) → log.md (este arquivo).
 
 ## 2026-09-11 — progresso — Plano de implementação (Fable)
 
-`docs/PLANO.md` produzido por agente de planejamento (modelo Fable) a partir da SPEC:
+`docs/plano.md` produzido por agente de planejamento (modelo Fable) a partir da SPEC:
 tipos centrais únicos em `src/core/types.ts`, interfaces TS concretas de todos os
 módulos, decisões em aberto resolvidas (pareamento nearest-na-janela; pause =
 `ctx.suspend()` sem desagendamento; pool de GainNodes; chart Lua → builder JS direto),
@@ -201,10 +243,10 @@ entrada de pesquisa acima.
 ## 2026-09-11 — progresso — Repositório criado
 
 Repo público `aqilputi/tengoku` no GitHub; jj colocated (`jj git init --colocate`),
-bookmark `main`. SPEC.md commitada (`b2e4e387`) e pushed.
+bookmark `main`. spec.md commitada (`b2e4e387`) e pushed.
 
-## 2026-09-11 — decisão — Stack e arquitetura (SPEC.md)
+## 2026-09-11 — decisão — Stack e arquitetura (spec.md)
 
 TS + Vite + Web Audio API no caminho crítico; Lua (wasmoon) como camada declarativa
 de chart, nunca no caminho de agendamento; Canvas 2D; build estático sem backend.
-Relógio mestre = relógio de áudio; tudo é função de `songTime`. Ver SPEC.md §0–§2.
+Relógio mestre = relógio de áudio; tudo é função de `songTime`. Ver spec.md §0–§2.

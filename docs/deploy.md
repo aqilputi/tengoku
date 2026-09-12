@@ -1,3 +1,12 @@
+---
+type: Runbook
+title: Deploy e verificação de produção
+description: Checklist de build/headers e matriz de teste manual em dispositivos reais (aceite M7 do [plano.md](plano.md)).
+resource: https://github.com/aqilputi/tengoku
+tags: [deploy, runbook, headers]
+timestamp: 2026-09-11T21:00:00Z
+---
+
 # DEPLOY — checklist (M7)
 
 Build: `pixi run build` → `dist/` estático. Alvos: Cloudflare Pages

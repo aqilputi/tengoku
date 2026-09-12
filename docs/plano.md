@@ -1,6 +1,15 @@
+---
+type: Implementation Plan
+title: Plano de implementação M0–M7
+description: Plano acionável derivado de [spec.md](spec.md) — interfaces TS concretas, decisões de design, critérios de aceite verificáveis e adendo pós-pesquisa (A1–A12).
+resource: https://github.com/aqilputi/tengoku
+tags: [plano, milestones, tdd]
+timestamp: 2026-09-11T21:00:00Z
+---
+
 # Plano de implementação — Tengoku
 
-Plano derivado de `docs/SPEC.md`. Toda decisão da spec é mantida; onde a spec deixa aberto, a decisão está registrada aqui com justificativa. Um engenheiro deve conseguir implementar M0–M7 sem reabrir discussão de arquitetura.
+Plano derivado de `docs/spec.md`. Toda decisão da spec é mantida; onde a spec deixa aberto, a decisão está registrada aqui com justificativa. Um engenheiro deve conseguir implementar M0–M7 sem reabrir discussão de arquitetura.
 
 ---
 
@@ -500,14 +509,14 @@ export function showResults(r: GameResult, rank: Rank, onReplay: () => void): vo
 **Arquivos a criar/modificar:**
 - `vite.config.ts` (hash de assets — default do Vite — e revisão do bundle wasmoon)
 - `public/_headers` (Cloudflare Pages) **e** `deploy/nginx.conf.example` — os dois alvos da spec §7
-- `docs/DEPLOY.md` (checklist de headers e MIME)
+- `docs/deploy.md` (checklist de headers e MIME)
 
 **Decisões:**
 - **Headers:** `Cache-Control: public, max-age=31536000, immutable` para `/assets/*` com hash; `Cache-Control: no-cache` para `index.html`; MIME `application/wasm`; compressão brotli/gzip para `.js`/`.wasm`; **sem** COOP/COEP (spec §7).
 - **Matriz de teste mínima:** Chrome + Firefox no desktop Linux, Safari no macOS/iPhone real, Chrome no Android real; iPhone com fone Bluetooth é o caso do aceite.
 
 **Aceite (spec):** funciona no iPhone com fone Bluetooth depois de calibrar.
-**Como verificar:** procedimento manual documentado em `docs/DEPLOY.md`: build → deploy → em cada dispositivo da matriz: boot desbloqueia áudio no gesto, calibração completa, música inteira jogável, resultado exibido. No iPhone+Bluetooth: calibrar (offset esperado 100–300ms), jogar e conferir que o erro mediano no HUD fica na faixa humana normal. Verificar headers com `curl -I` no `.wasm`, num `.js` com hash e no `index.html`.
+**Como verificar:** procedimento manual documentado em `docs/deploy.md`: build → deploy → em cada dispositivo da matriz: boot desbloqueia áudio no gesto, calibração completa, música inteira jogável, resultado exibido. No iPhone+Bluetooth: calibrar (offset esperado 100–300ms), jogar e conferir que o erro mediano no HUD fica na faixa humana normal. Verificar headers com `curl -I` no `.wasm`, num `.js` com hash e no `index.html`.
 
 **Riscos e mitigação:**
 - *Safari iOS: `currentTime` parado antes do unlock* → o boot do M1 já só fixa âncoras **depois** do `resume()` resolvido; teste explícito no iPhone.
@@ -593,7 +602,7 @@ Zero dependências de runtime além do `wasmoon`. Pin via `package-lock.json` co
 
 ## 5. Adendo 2026-09-11 — ajustes pós-pesquisa
 
-A pesquisa em repositórios externos ([PESQUISA.md](PESQUISA.md), ajustes A1–A12)
+A pesquisa em repositórios externos ([pesquisa.md](pesquisa.md), ajustes A1–A12)
 altera os pontos abaixo. Onde conflitar com o texto acima, **este adendo prevalece**.
 
 1. **Scheduler (M2)**: o tick roda num **Web Worker** (`src/core/scheduler.worker.ts`), não em `setInterval` na main thread — imune a throttling de aba oculta e jitter de GC (padrão Tone.js/cwilso). O worker só emite "tick"; a varredura e o `playAt` continuam na main thread. `SchedulerOptions.lookaheadS` default passa de **0.2 → 0.1**. Regra nova: **SFX dependentes de input nunca entram no lookahead** (só `playNow`); evento cujo `when` já passou é **dropado com log**, nunca tocado atrasado.
