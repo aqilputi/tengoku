@@ -5,6 +5,27 @@ Cada entrada: data, tipo (`decisão` | `pesquisa` | `progresso` | `grading`), re
 
 ---
 
+## 2026-09-11 — progresso — M4 implementado via TDD (74 testes verdes; aceite M4 automatizado)
+
+LuaHost + api.ts + charts/musica1.lua, red→green no vitest (wasmoon roda em Node).
+**Aceite do M4 é um teste**: o chart do M3 reescrito em Lua produz lista de eventos
+idêntica (`toEqual`). Sandbox A5 verificado por teste (io/os/require/package/load/
+loadfile/dofile/debug/collectgarbage/print e string.dump nil; stdlib segura intacta).
+Validação pós-carga: song{} exatamente 1x, beats finitos ≥0, bpm >0, audio em
+assets/, sintaxe/runtime error ⇒ ChartLoadError sem estado parcial. Callbacks:
+on_hit/on_miss com try/catch e circuit breaker (5 erros ⇒ desativa; jogo segue).
+DSL: song/minigame curried/sfx/cue/expect/anim (forma dupla: declarativa na carga,
+runtime em callback) + play_sfx via handlers.
+
+Descoberta de API: `setMemoryMax` exige `traceAllocations: true` no createEngine
+(custo só na VM Lua — carga + callbacks esparsos, fora do caminho de áudio).
+Chart real importado nos testes via `?raw` (pipeline Vite no vitest). luacheck
+0/0 no chart real (`unused_args = false`: assinatura de callback é fixa). CI agora
+roda também setup-lua + lint-chart + fmt-chart-check.
+
+Pendente (M5): integrar LuaHost no main.ts (chart Lua dirigindo o jogo) — exige
+o glue `?url` do wasm no browser (teste offline pendente de CI destravado).
+
 ## 2026-09-11 — progresso — M3 implementado via TDD (57 testes verdes)
 
 Judge + InputManager, red→green. Matriz de pareamento completa como teste: input

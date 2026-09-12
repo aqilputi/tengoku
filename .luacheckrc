@@ -12,5 +12,7 @@ not_globals = {
   "io", "os", "require", "package", "load", "loadfile", "dofile",
   "loadstring", "debug", "collectgarbage", "print",
 }
+-- callbacks da DSL têm assinatura fixa; argumento não usado não é erro do chart
+unused_args = false
 files["charts/"] = { max_line_length = 100 }
 exclude_files = { "node_modules/", "dist/" }

@@ -14,3 +14,7 @@ jobs:
           cache: true
       # gate = typecheck (tsc strict) + testes (vitest, inclui NFRs de timing) + build
       - run: pixi run gate
+      # gates dos charts Lua: lint (globals do sandbox viram erro) + formatação
+      - run: pixi run setup-lua
+      - run: pixi run lint-chart
+      - run: pixi run fmt-chart-check
