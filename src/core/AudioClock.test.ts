@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import { AudioClock } from "./AudioClock";
 import { TempoMap } from "./TempoMap";
 import { MockAudioContext, MockWallClock } from "../../test/mocks/MockAudioContext";

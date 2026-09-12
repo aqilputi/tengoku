@@ -149,6 +149,11 @@ export class AudioClock {
     return this.audioAnchor + t;
   }
 
+  /** ctx.currentTime cru — só para decisões de agendamento (Scheduler). */
+  get ctxTime(): CtxSeconds {
+    return this.ctx.currentTime;
+  }
+
   /** Para o InputManager: e.timeStamp (ms, base performance.now) -> songTime. */
   perfTimeToSongTime(perfMs: number): SongSeconds {
     const avgDelta = this.deltaCount > 0 ? this.deltaSum / this.deltaCount : this.now() / 1000 - this.ctx.currentTime;

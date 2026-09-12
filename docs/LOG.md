@@ -5,6 +5,31 @@ Cada entrada: data, tipo (`decisão` | `pesquisa` | `progresso` | `grading`), re
 
 ---
 
+## 2026-09-11 — progresso — M0+M1+M2 implementados via TDD (36 testes verdes)
+
+Red→green por módulo. Gate de qualidade: `pixi run gate` = tsc strict + vitest + build,
+rodando também no CI (GitHub Actions + setup-pixi). npm audit limpo (vitest 3→5 por
+advisory dev-only). Bundle: 10.9 KB (4 KB gzip).
+
+Implementado: types, TempoMap (multi-segmento, validação), AudioClock (clock híbrido
+A3, fallback de latência, pause/resume com re-âncora perf↔ctx, drift observável),
+SfxPlayer (pool de 16 GainNodes, warmup A8, nome desconhecido não lança), Scheduler
+(ticker em Web Worker A1, lookahead 100ms A2, cursor monotônico, drop de evento
+atrasado com contagem), Renderer (DPI, FPS throttled), boot (gesto + sanity de
+e.timeStamp A4), DiagnosticsHud (F1), demo de metrônomo 3min/120BPM em main.ts.
+
+NFRs como teste executável: currentTime granular de 20ms ⇒ songTime monotônico com
+passos ≤5ms; tick atrasado 300ms ⇒ nada pulado/duplicado; stall de 600ms ⇒ eventos
+vencidos dropados, nunca tocados atrasados; 8 SFX/s por 30s sem drop e sem `when` no
+passado; pool de gains nunca cresce no caminho quente; drift 3min ≈ 0 no mock.
+
+Correções que os testes forçaram: outputLatency=0 explícito é "disponível" (não cai
+pro baseLatency); decisões de agendamento/drop movidas pro relógio ctx cru (offsets
+de percepção não pertencem ao agendamento).
+
+Pendente de aceite manual (M1/M2): ouvir metrônomo de 3min com HUD aberto (drift <5ms)
+e allocation profiling no DevTools. `pixi run dev` → tela "toque para começar".
+
 ## 2026-09-11 — progresso — pixi instalado e ambiente resolvido
 
 `pixi install` verde: node 22.23.2, lua 5.4.8, stylua 2.5.2, lua-language-server 3.19,

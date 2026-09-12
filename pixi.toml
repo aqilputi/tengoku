@@ -20,6 +20,7 @@ install = "npm install"
 dev = { cmd = "npm run dev", depends-on = ["install"] }
 build = { cmd = "npm run build", depends-on = ["install"] }
 test = { cmd = "npm run test", depends-on = ["install"] }
+gate = { cmd = "npm run gate", depends-on = ["install"] }
 # Lua (charts) — luacheck não existe no conda-forge; vem via luarocks.
 # O manifest global do luarocks.org estoura o loader do Lua 5.4 ("more than
 # 65536 constants"), então usamos manifests por usuário, que são pequenos.
